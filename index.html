@@ -3,1027 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gopal Mobiles Stock Manager</title>
+    <title>Gopal Mobiles Stock Manager Pro</title>
     <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
+        :root {
+            --primary: #F28C38;
+            --primary-dark: #d97a30;
+            --bg-light: #f8f9fa;
+            --bg-dark: #1a1a1a;
+            --card-light: #ffffff;
+            --card-dark: #2d2d2d;
+            --text-light: #333;
+            --text-dark: #f4f4f4;
+            --success: #28a745;
+            --danger: #dc3545;
         }
 
-        body {
-            background-color: #f4f4f4;
-            color: #333;
-            font-size: 16px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        body.dark-mode {
-            background-color: #333;
-            color: #f4f4f4;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 8px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        h1 {
-            font-size: 1.2rem;
-            color: #F28C38;
-            text-align: center;
-            flex-grow: 1;
-        }
-
-        body.dark-mode h1 {
-            color: #f4f4f4;
-        }
-
-        .dark-mode-toggle, .report-button {
-            background-color: #F28C38;
-            color: #fff;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            min-width: 44px;
-            min-height: 44px;
-            margin: 4px;
-        }
-
-        .report-button {
-            background-color: #007bff;
-        }
-
-        .dark-mode-toggle:hover, .report-button:hover {
-            background-color: #d97a30;
-        }
-
-        .report-button:hover {
-            background-color: #0056b3;
-        }
-
-        .form-section, .filter-section, .table-section, .report-section {
-            background-color: #fff;
-            padding: 8px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
-        }
-
-        body.dark-mode .form-section,
-        body.dark-mode .filter-section,
-        body.dark-mode .table-section,
-        body.dark-mode .report-section {
-            background-color: #444;
-        }
-
-        .form-group {
-            margin-bottom: 8px;
-        }
-
-        label {
-            display: block;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-            color: #333;
-        }
-
-        body.dark-mode label {
-            color: #f4f4f4;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            background-color: #fff;
-            color: #333;
-            min-height: 44px;
-            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
-        }
-
-        body.dark-mode input,
-        body.dark-mode select,
-        body.dark-mode textarea {
-            border-color: #666;
-            background-color: #555;
-            color: #f4f4f4;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: #F28C38;
-            outline: none;
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        button {
-            background-color: #F28C38;
-            color: #fff;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            min-width: 44px;
-            min-height: 44px;
-            margin: 4px 0;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #d97a30;
-        }
-
-        #scanIMEI, #exportCSVReport {
-            background-color: #28a745;
-        }
-
-        #scanIMEI:hover, #exportCSVReport:hover {
-            background-color: #218838;
-        }
-
-        #video-container, #report-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 8px;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        body.dark-mode #video-container,
-        body.dark-mode #report-container {
-            background-color: rgba(0, 0, 0, 0.9);
-        }
-
-        #video-wrapper, #report-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 100vw;
-            margin: 0 auto;
-        }
-
-        #video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-
-        #scan-line {
-            position: absolute;
-            top: 50%;
-            left: 10%;
-            width: 80%;
-            height: 2px;
-            background-color: red;
-            transform: translateY(-50%);
-        }
-
-        #scan-status {
-            text-align: center;
-            font-size: 1rem;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-
-        #report-content {
-            text-align: left;
-            font-size: 1rem;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        body.dark-mode #report-content {
-            color: #f4f4f4;
-        }
-
-        .report-columns .column {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-
-        body.dark-mode .report-columns .column {
-            border-color: #666;
-            background-color: #555;
-            color: #f4f4f4;
-        }
-
-        .loading-indicator {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #F28C38;
-            margin-bottom: 8px;
-        }
-
-        body.dark-mode .loading-indicator {
-            color: #f4f4f4;
-        }
-
-        #close-scanner, #close-report {
-            position: sticky;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 300px;
-        }
-
-        .filter-section, .report-columns {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .filter-section .form-group {
-            flex: 1;
-            min-width: 100%;
-        }
-
-        .report-columns .column {
-            flex: 1;
-            min-width: 100%;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-
-        thead {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-        }
-
-        body.dark-mode th,
-        body.dark-mode td {
-            border-color: #666;
-        }
-
-        th {
-            background-color: #F28C38;
-            color: #fff;
-        }
-
-        body.dark-mode th {
-            background-color: #d97a30;
-            color: #f4f4f4;
-        }
-
-        td {
-            color: #333;
-        }
-
-        body.dark-mode td {
-            color: #f4f4f4;
-        }
-
-        tr.available {
-            background-color: #DFFFD6;
-        }
-
-        body.dark-mode tr.available {
-            background-color: #4a7043;
-        }
-
-        tr.sold {
-            background-color: #FFCCCB;
-        }
-
-        body.dark-mode tr.sold {
-            background-color: #704343;
-        }
-
-        .profit-positive {
-            color: #28a745;
-        }
-
-        body.dark-mode .profit-positive {
-            color: #4ade80;
-        }
-
-        .profit-negative {
-            color: #dc3545;
-        }
-
-        body.dark-mode .profit-negative {
-            color: #f87171;
-        }
-
-        .action-buttons button {
-            margin-right: 4px;
-            margin-bottom: 4px;
-            padding: 8px;
-            font-size: 0.8rem;
-        }
-
-        #exportCSV {
-            margin-bottom: 8px;
-            width: 100%;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .hidden-mobile {
-            display: table-cell;
-        }
-
-        @media (min-width: 768px) {
-            .report-columns .column {
-                min-width: 0;
-                flex: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 4px;
-            }
-
-            h1 {
-                font-size: 1rem;
-            }
-
-            .form-group {
-                min-width: 100%;
-            }
-
-            table {
-                font-size: 0.7rem;
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-
-            th, td {
-                padding: 6px;
-            }
-
-            .hidden-mobile {
-                display: none;
-            }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body { background-color: var(--bg-light); color: var(--text-light); transition: 0.3s; line-height: 1.6; }
+        body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+
+        /* Dashboard Styles */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--card-light); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; border-bottom: 4px solid var(--primary); }
+        .dark-mode .stat-card { background: var(--card-dark); }
+        .stat-card h3 { font-size: 0.9rem; text-transform: uppercase; color: #777; margin-bottom: 10px; }
+        .stat-card p { font-size: 1.5rem; font-weight: bold; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        h1 { color: var(--primary); font-size: 1.5rem; }
+
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
+
+        section { background: var(--card-light); padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .dark-mode section { background: var(--card-dark); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: transparent; color: inherit; font-size: 1rem; }
+
+        .table-container { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: var(--primary); color: white; text-align: left; padding: 12px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .dark-mode td { border-bottom-color: #444; }
+
+        tr.sold { opacity: 0.7; background-color: rgba(220, 53, 69, 0.05); }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge-available { background: #d4edda; color: #155724; }
+        .badge-sold { background: #f8d7da; color: #721c24; }
+
+        /* Hidden Utility */
+        .hidden { display: none !important; }
+
+        /* Scanner Overlays */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #video { width: 100%; max-width: 500px; border-radius: 10px; border: 3px solid var(--primary); }
+
+        @media (max-width: 600px) {
+            .stat-card { padding: 10px; }
+            .stat-card p { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Gopal Mobiles Stock Manager</h1>
-            <button class="report-button" onclick="openReportModal()">Daily Sales Report</button>
-            <button class="dark-mode-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
-        </header>
 
-        <section class="form-section">
-            <h2 id="formTitle">Add New Stock</h2>
-            <form id="addStockForm">
-                <input type="hidden" id="editId">
-                <div class="form-group">
-                    <label for="model">Model Name</label>
-                    <input type="text" id="model" required>
-                </div>
-                <div class="form-group">
-                    <label for="imei">IMEI Number</label>
-                    <input type="text" id="imei" required>
-                    <button type="button" id="scanIMEI">Scan IMEI</button>
-                </div>
-                <div class="form-group">
-                    <label for="ramRomSelect">RAM/ROM</label>
-                    <select id="ramRomSelect" required>
-                        <option value="" disabled selected>Select RAM/ROM</option>
-                        <option value="3GB/64GB">3-64</option>
-                        <option value="4GB/64GB">4-64</option>
-                        <option value="4GB/128GB">4-128</option>
-                        <option value="6GB/128GB">6-128</option>
-                        <option value="8GB/128GB">8-128</option>
-                        <option value="8GB/256GB">8-256</option>
-                        <option value="12GB/256GB">12-256</option>
-                        <option value="12GB/512GB">12-512</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                    <input type="text" id="ramRomCustom" class="hidden" placeholder="Enter custom RAM/ROM (e.g., 16GB/1TB)">
-                </div>
-                <div class="form-group">
-                    <label for="purchasePrice">Purchase Price (₹)</label>
-                    <input type="number" id="purchasePrice" required>
-                </div>
-                <div class="form-group">
-                    <label for="dealer">Dealer Name</label>
-                    <input type="text" id="dealer" required>
-                </div>
-                <div class="form-group sold-fields hidden">
-                    <label for="soldDate">Sold Date</label>
-                    <input type="date" id="soldDate">
-                </div>
-                <div class="form-group sold-fields hidden">
-                    <label for="soldPrice">Sold Price (₹)</label>
-                    <input type="number" id="soldPrice">
-                </div>
-                <button type="submit">Add Phone</button>
-            </form>
-        </section>
-
-        <section class="filter-section">
-            <div class="form-group">
-                <label for="searchModel">Search Model</label>
-                <input type="text" id="searchModel" placeholder="Enter model name">
-            </div>
-            <div class="form-group">
-                <label for="searchIMEI">Search IMEI</label>
-                <input type="text" id="searchIMEI" placeholder="Enter IMEI number">
-            </div>
-            <div class="form-group">
-                <label for="statusFilter">Status</label>
-                <select id="statusFilter">
-                    <option value="all">All</option>
-                    <option value="available">Available</option>
-                    <option value="sold">Sold</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="minPrice">Min Price (₹)</label>
-                <input type="number" id="minPrice" placeholder="Min price">
-            </div>
-            <div class="form-group">
-                <label for="maxPrice">Max Price (₹)</label>
-                <input type="number" id="maxPrice" placeholder="Max price">
-            </div>
-        </section>
-
-        <section class="table-section">
-            <button id="exportCSV">Export to CSV</button>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Model</th>
-                        <th>IMEI</th>
-                        <th>RAM/ROM</th>
-                        <th>Purchase Price (₹)</th>
-                        <th class="hidden-mobile">Dealer</th>
-                        <th>Status</th>
-                        <th class="hidden-mobile">Received Date</th>
-                        <th>Sold Date</th>
-                        <th>Sold Price (₹)</th>
-                        <th>Profit/Loss (₹)</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="stockTableBody"></tbody>
-            </table>
-        </section>
-
-        <div id="video-container">
-            <div id="scan-status">Align barcode with red line, scanning...</div>
-            <div id="video-wrapper">
-                <video id="video" autoplay></video>
-                <div id="scan-line"></div>
-            </div>
-            <div class="loading-indicator">Initializing scanner...</div>
-            <button id="close-scanner" onclick="stopScanning()">Close Scanner</button>
+<div class="container">
+    <header>
+        <h1>📱 Gopal Mobiles</h1>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-outline" onclick="toggleDarkMode()">🌓 Mode</button>
+            <button class="btn btn-primary" onclick="openReportModal()">📊 Report</button>
         </div>
+    </header>
 
-        <div id="report-container">
-            <div id="report-wrapper">
-                <section class="report-section">
-                    <h2>Daily Sales Report</h2>
-                    <div class="form-group">
-                        <label for="reportDate">Select Date</label>
-                        <input type="date" id="reportDate">
-                    </div>
-                    <div id="report-content" class="report-columns"></div>
-                    <div class="form-group">
-                        <label for="reportNotes">Notes/Remarks</label>
-                        <textarea id="reportNotes" placeholder="Enter notes (e.g., special customer behavior, discounts, faulty units)"></textarea>
-                    </div>
-                    <button id="exportCSVReport">Export as CSV</button>
-                </section>
-                <button id="close-report" onclick="closeReportModal()">Close Report</button>
-            </div>
+    <div class="dashboard">
+        <div class="stat-card">
+            <h3>In Stock</h3>
+            <p id="dash-total-stock">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Inventory Value</h3>
+            <p id="dash-total-value">₹0</p>
+        </div>
+        <div class="stat-card" style="border-bottom-color: var(--success);">
+            <h3>Sold (Total)</h3>
+            <p id="dash-total-sold">0</p>
         </div>
     </div>
 
-    <script>
-        const imeiDatabase = {
-            '123456789012345': { model: 'Samsung Galaxy S23', ramRom: '8GB/128GB' },
-            '987654321098765': { model: 'iPhone 14', ramRom: '6GB/256GB' }
-        };
-
-        let stock = JSON.parse(localStorage.getItem('stock')) || [];
-        let nextId = stock.length ? Math.max(...stock.map(item => item.id)) + 1 : 1;
-        let codeReader = null;
-        let mediaStream = null;
-
-        console.log('App initialized at', new Date().toLocaleString('en-IN'), 'Stock:', stock);
-        updateTable();
-        setupEventListeners();
-
-        function setupEventListeners() {
-            document.getElementById('addStockForm').addEventListener('submit', addStock);
-            document.getElementById('scanIMEI').addEventListener('click', startScanning);
-            document.getElementById('exportCSV').addEventListener('click', exportToCSV);
-            document.getElementById('searchModel').addEventListener('input', updateTable);
-            document.getElementById('searchIMEI').addEventListener('input', updateTable);
-            document.getElementById('statusFilter').addEventListener('change', updateTable);
-            document.getElementById('minPrice').addEventListener('input', updateTable);
-            document.getElementById('maxPrice').addEventListener('input', updateTable);
-            document.getElementById('ramRomSelect').addEventListener('change', toggleRamRomCustom);
-            document.getElementById('reportDate').addEventListener('change', generateDailyReport);
-            document.getElementById('reportNotes').addEventListener('input', saveNotes);
-            document.getElementById('exportCSVReport').addEventListener('click', exportReportToCSV);
-        }
-
-        function toggleRamRomCustom() {
-            const ramRomSelect = document.getElementById('ramRomSelect');
-            const ramRomCustom = document.getElementById('ramRomCustom');
-            if (ramRomSelect.value === 'custom') {
-                ramRomCustom.classList.remove('hidden');
-                ramRomCustom.required = true;
-            } else {
-                ramRomCustom.classList.add('hidden');
-                ramRomCustom.required = false;
-                ramRomCustom.value = '';
-            }
-        }
-
-        function addStock(e) {
-            e.preventDefault();
-            try {
-                const editId = document.getElementById('editId').value;
-                const model = document.getElementById('model').value.trim();
-                const imei = document.getElementById('imei').value.trim();
-                const ramRomSelect = document.getElementById('ramRomSelect').value;
-                const ramRomCustom = document.getElementById('ramRomCustom').value.trim();
-                const ramRom = ramRomSelect === 'custom' ? ramRomCustom : ramRomSelect;
-                const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
-                const dealer = document.getElementById('dealer').value.trim();
-                const soldDate = document.getElementById('soldDate').value;
-                const soldPrice = parseFloat(document.getElementById('soldPrice').value) || 0;
-
-                if (ramRomSelect === 'custom' && !ramRomCustom) {
-                    alert('Please enter a custom RAM/ROM value.');
-                    return;
-                }
-
-                const newItem = {
-                    id: editId ? parseInt(editId) : nextId++,
-                    model,
-                    imei,
-                    ramRom,
-                    purchasePrice,
-                    dealer,
-                    status: soldDate && soldPrice ? 'sold' : 'available',
-                    receivedDate: editId ? stock.find(item => item.id === parseInt(editId))?.receivedDate || new Date().toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
-                    soldDate: soldDate || '',
-                    soldPrice: soldPrice,
-                    profitLoss: soldDate && soldPrice ? soldPrice - purchasePrice : 0
-                };
-
-                if (editId) {
-                    stock = stock.filter(item => item.id !== parseInt(editId));
-                }
-                stock.push(newItem);
-                localStorage.setItem('stock', JSON.stringify(stock));
-                console.log('New phone added:', newItem, 'Stock:', stock);
-                alert(editId ? 'Phone updated successfully!' : 'Phone added successfully!');
-
-                document.getElementById('searchModel').value = '';
-                document.getElementById('searchIMEI').value = '';
-                document.getElementById('statusFilter').value = 'all';
-                document.getElementById('minPrice').value = '';
-                document.getElementById('maxPrice').value = '';
-
-                resetForm();
-                updateTable();
-                if (document.getElementById('report-container').style.display === 'block') {
-                    generateDailyReport();
-                }
-            } catch (error) {
-                console.error('Error adding phone:', error);
-                alert('Failed to add phone. Check console for details.');
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('addStockForm').reset();
-            document.getElementById('editId').value = '';
-            document.getElementById('formTitle').textContent = 'Add New Stock';
-            document.querySelectorAll('.sold-fields').forEach(field => field.classList.add('hidden'));
-            document.getElementById('ramRomCustom').classList.add('hidden');
-            document.getElementById('ramRomCustom').required = false;
-            document.getElementById('ramRomSelect').value = '';
-        }
-
-        function updateTable() {
-            console.log('Updating table with stock:', stock);
-            const searchModel = document.getElementById('searchModel').value.toLowerCase();
-            const searchIMEI = document.getElementById('searchIMEI').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
-            const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
-
-            const filteredStock = stock.filter(item => {
-                const matchesModel = item.model.toLowerCase().includes(searchModel);
-                const matchesIMEI = item.imei.toLowerCase().includes(searchIMEI);
-                const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-                const matchesPrice = item.purchasePrice >= minPrice && item.purchasePrice <= maxPrice;
-                return matchesModel && matchesIMEI && matchesStatus && matchesPrice;
-            });
-
-            console.log('Filtered stock:', filteredStock);
-
-            const tbody = document.getElementById('stockTableBody');
-            tbody.innerHTML = '';
-            filteredStock.forEach(item => {
-                const row = document.createElement('tr');
-                row.className = item.status;
-                row.innerHTML = `
-                    <td>${item.id}</td>
-                    <td>${item.model}</td>
-                    <td>${item.imei}</td>
-                    <td>${item.ramRom}</td>
-                    <td>${item.purchasePrice}</td>
-                    <td class="hidden-mobile">${item.dealer}</td>
-                    <td>${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</td>
-                    <td class="hidden-mobile">${item.receivedDate}</td>
-                    <td>${item.soldDate || '-'}</td>
-                    <td>${item.soldPrice || '-'}</td>
-                    <td class="${item.profitLoss >= 0 ? 'profit-positive' : 'profit-negative'}">${item.profitLoss || '-'}</td>
-                    <td class="action-buttons">
-                        ${item.status === 'available' ? `<button onclick="markAsSold(${item.id})">Mark as Sold</button>` : ''}
-                        <button onclick="editStock(${item.id})">✎ Edit</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function markAsSold(id) {
-            const soldPrice = prompt('Enter sold price (₹):');
-            if (soldPrice && !isNaN(soldPrice)) {
-                const item = stock.find(item => item.id === id);
-                if (item) {
-                    item.status = 'sold';
-                    item.soldDate = new Date().toLocaleDateString('en-GB');
-                    item.soldPrice = parseFloat(soldPrice);
-                    item.profitLoss = item.soldPrice - item.purchasePrice;
-                    localStorage.setItem('stock', JSON.stringify(stock));
-                    console.log('Marked as sold:', item);
-                    updateTable();
-                    if (document.getElementById('report-container').style.display === 'block') {
-                        generateDailyReport();
-                    }
-                }
-            }
-        }
-
-        function editStock(id) {
-            const item = stock.find(item => item.id === id);
-            if (item) {
-                document.getElementById('editId').value = item.id;
-                document.getElementById('model').value = item.model;
-                document.getElementById('imei').value = item.imei;
-                const ramRomSelect = document.getElementById('ramRomSelect');
-                const ramRomCustom = document.getElementById('ramRomCustom');
-                const predefinedOptions = ['3GB/64GB', '4GB/64GB', '4GB/128GB', '6GB/128GB', '8GB/128GB', '8GB/256GB', '12GB/256GB', '12GB/512GB'];
-                if (predefinedOptions.includes(item.ramRom)) {
-                    ramRomSelect.value = item.ramRom;
-                    ramRomCustom.classList.add('hidden');
-                    ramRomCustom.required = false;
-                } else {
-                    ramRomSelect.value = 'custom';
-                    ramRomCustom.classList.remove('hidden');
-                    ramRomCustom.required = true;
-                    ramRomCustom.value = item.ramRom;
-                }
-                document.getElementById('purchasePrice').value = item.purchasePrice;
-                document.getElementById('dealer').value = item.dealer;
-                document.getElementById('formTitle').textContent = 'Edit Phone';
-
-                if (item.status === 'sold') {
-                    document.querySelectorAll('.sold-fields').forEach(field => field.classList.remove('hidden'));
-                    document.getElementById('soldDate').value = item.soldDate ? new Date(item.soldDate.split('/').reverse().join('-')).toISOString().split('T')[0] : '';
-                    document.getElementById('soldPrice').value = item.soldPrice || '';
-                } else {
-                    document.querySelectorAll('.sold-fields').forEach(field => field.classList.add('hidden'));
-                }
-
-                stock = stock.filter(stockItem => stockItem.id !== id);
-                localStorage.setItem('stock', JSON.stringify(stock));
-                console.log('Editing item:', item);
-            }
-        }
-
-        function exportToCSV() {
-            try {
-                console.log('Generating CSV for', stock.length, 'items');
-                const headers = ['ID,Model,IMEI,RAM/ROM,Purchase Price,Dealer,Status,Received Date,Sold Date,Sold Price,Profit/Loss'];
-                const rows = stock.map(item => `${item.id},${item.model},${item.imei},${item.ramRom},${item.purchasePrice},${item.dealer},${item.status},${item.receivedDate},${item.soldDate || ''},${item.soldPrice || ''},${item.profitLoss || ''}`);
-                const csv = headers.concat(rows).join('\n');
-                if (window.Android) {
-                    window.Android.saveCSV(csv);
-                } else {
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'gopal_mobiles_stock.csv';
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                }
-                console.log('CSV download initiated');
-            } catch (error) {
-                console.error('CSV export error:', error);
-                alert('Failed to export CSV. Check console for details.');
-            }
-        }
-
-        function startScanning() {
-            console.log('Starting IMEI scan at', new Date().toLocaleString('en-IN'));
-            const videoContainer = document.getElementById('video-container');
-            const videoElement = document.getElementById('video');
-            const scanStatus = document.getElementById('scan-status');
-            const loadingIndicator = videoContainer.querySelector('.loading-indicator');
-            videoContainer.style.display = 'block';
-            loadingIndicator.style.display = 'block';
-            scanStatus.textContent = 'Initializing camera...';
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                console.error('Media devices not supported');
-                alert('Camera not supported on this device. Please enter IMEI manually.');
-                stopScanning();
-                return;
-            }
-
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then(stream => {
-                    console.log('Camera access granted');
-                    mediaStream = stream;
-                    videoElement.srcObject = stream;
-                    loadingIndicator.style.display = 'none';
-                    scanStatus.textContent = 'Align barcode with red line, scanning...';
-
-                    if (typeof ZXing !== 'undefined') {
-                        console.log('Initializing ZXing with CODE_128');
-                        codeReader = new ZXing.BrowserMultiFormatReader();
-                        const hints = new Map();
-                        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128]);
-                        codeReader.hints = hints;
-
-                        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-                            if (result) {
-                                console.log('Scan successful:', result.text);
-                                document.getElementById('imei').value = result.text;
-                                const data = imeiDatabase[result.text];
-                                if (data) {
-                                    document.getElementById('model').value = data.model;
-                                    const ramRomSelect = document.getElementById('ramRomSelect');
-                                    const ramRomCustom = document.getElementById('ramRomCustom');
-                                    const predefinedOptions = ['3GB/64GB', '4GB/64GB', '4GB/128GB', '6GB/128GB', '8GB/128GB', '8GB/256GB', '12GB/256GB', '12GB/512GB'];
-                                    if (predefinedOptions.includes(data.ramRom)) {
-                                        ramRomSelect.value = data.ramRom;
-                                        ramRomCustom.classList.add('hidden');
-                                        ramRomCustom.required = false;
-                                    } else {
-                                        ramRomSelect.value = 'custom';
-                                        ramRomCustom.classList.remove('hidden');
-                                        ramRomCustom.required = true;
-                                        ramRomCustom.value = data.ramRom;
-                                    }
-                                    console.log('Auto-filled model and RAM/ROM:', data);
-                                }
-                                alert('IMEI scanned successfully!');
-                                stopScanning();
-                            }
-                            if (err && !(err instanceof ZXing.NotFoundException)) {
-                                console.error('ZXing error:', err);
-                                scanStatus.textContent = 'Scan error. Check alignment or lighting.';
-                            }
-                        }, { hints: hints });
-
-                        const timeoutId = setTimeout(() => {
-                            console.warn('Scan timeout after 30 seconds');
-                            scanStatus.textContent = 'No barcode detected. Try again with better alignment or lighting.';
-                            setTimeout(stopScanning, 2000);
-                        }, 30000);
-                    } else {
-                        console.error('ZXing.js not loaded');
-                        alert('Scanner library not loaded. Please enter IMEI manually.');
-                        stopScanning();
-                    }
-                })
-                .catch(error => {
-                    console.error('Camera access error:', error);
-                    loadingIndicator.style.display = 'none';
-                    scanStatus.textContent = 'Camera access denied. Check permissions or settings.';
-                    setTimeout(() => {
-                        stopScanning();
-                        videoContainer.style.display = 'none';
-                    }, 3000);
-                });
-        }
-
-        function stopScanning() {
-            console.log('Stopping scan at', new Date().toLocaleString('en-IN'));
-            const videoContainer = document.getElementById('video-container');
-            const videoElement = document.getElementById('video');
-            const loadingIndicator = videoContainer.querySelector('.loading-indicator');
-            const scanStatus = document.getElementById('scan-status');
-
-            try {
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(track => {
-                        track.stop();
-                        console.log('Stopped media track:', track);
-                    });
-                    mediaStream = null;
-                    videoElement.srcObject = null;
-                }
-
-                if (codeReader) {
-                    codeReader.reset();
-                    codeReader = null;
-                    console.log('ZXing.js reset');
-                }
-
-                videoContainer.style.display = 'none';
-                loadingIndicator.style.display = 'none';
-                scanStatus.textContent = 'Align barcode with red line, scanning...';
-            } catch (error) {
-                console.error('Error stopping scanner:', error);
-                alert('Failed to close scanner. Please try again.');
-                videoContainer.style.display = 'none';
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            console.log('Dark mode toggled at', new Date().toLocaleString('en-IN'));
-        }
-
-        function openReportModal() {
-            document.getElementById('report-container').style.display = 'block';
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('reportDate').value = today;
-            generateDailyReport();
-        }
-
-        function closeReportModal() {
-            document.getElementById('report-container').style.display = 'none';
-        }
-
-        function generateDailyReport() {
-            const reportDate = document.getElementById('reportDate').value;
-            if (!reportDate) {
-                document.getElementById('report-content').innerHTML = '<p>Please select a date.</p>';
-                return;
-            }
-
-            const selectedDate = new Date(reportDate);
-            const formattedDate = selectedDate.toLocaleDateString('en-GB');
-
-            // Convert selected date to timestamp for comparison
-            const selectedDateStart = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
-            const selectedDateEnd = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
-
-            // Calculate opening stock: phones available before the selected date
-            const openingStock = stock.filter(item => {
-                const receivedDate = new Date(item.receivedDate.split('/').reverse().join('-')).getTime();
-                const soldDate = item.soldDate ? new Date(item.soldDate.split('/').reverse().join('-')).getTime() : Infinity;
-                return receivedDate < selectedDateStart && soldDate > selectedDateEnd;
-            }).length;
-
-            // New phones received on the selected date
-            const newPhones = stock.filter(item => item.receivedDate === formattedDate);
-            const newPhonesList = newPhones.map(item => `${item.model} (IMEI: ${item.imei})`).join('<br>') || 'None';
-
-            // Phones sold on the selected date
-            const soldPhones = stock.filter(item => item.soldDate === formattedDate && item.status === 'sold');
-            const soldPhonesList = soldPhones.map(item => `${item.model} (IMEI: ${item.imei})`).join('<br>') || 'None';
-
-            // Closing stock: phones available at the end of the selected date
-            const closingStock = stock.filter(item => {
-                const receivedDate = new Date(item.receivedDate.split('/').reverse().join('-')).getTime();
-                const soldDate = item.soldDate ? new Date(item.soldDate.split('/').reverse().join('-')).getTime() : Infinity;
-                return receivedDate <= selectedDateEnd && soldDate > selectedDateEnd;
-            }).length;
-
-            // Load notes for the selected date
-            const notes = localStorage.getItem(`notes_${formattedDate}`) || '';
-            document.getElementById('reportNotes').value = notes;
-
-            const reportContent = `
-                <div class="report-columns">
-                    <div class="column">
-                        <strong>Opening Stock</strong><br>
-                        ${openingStock} units
-                    </div>
-                    <div class="column">
-                        <strong>New Phones</strong><br>
-                        ${newPhones.length} units<br>
-                        ${newPhonesList}
-                    </div>
-                    <div class="column">
-                        <strong>Sold Phones</strong><br>
-                        ${soldPhones.length} units<br>
-                        ${soldPhonesList}
-                    </div>
-                    <div class="column">
-                        <strong>Closing Stock</strong><br>
-                        ${closingStock} units
+    <section id="form-section">
+        <h2 id="formTitle" style="margin-bottom:15px">Add New Stock</h2>
+        <form id="stockForm">
+            <input type="hidden" id="editId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Model Name</label>
+                    <input type="text" id="model" required placeholder="e.g. iPhone 15">
+                </div>
+                <div class="form-group">
+                    <label>IMEI / Serial</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="text" id="imei" required>
+                        <button type="button" class="btn btn-success" onclick="startScanning()">📷</button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>RAM/ROM</label>
+                    <select id="ramRomSelect" onchange="handleRamRomChange()">
+                        <option value="4GB/64GB">4-64</option>
+                        <option value="6GB/128GB">6-128</option>
+                        <option value="8GB/128GB" selected>8-128</option>
+                        <option value="8GB/256GB">8-256</option>
+                        <option value="12GB/256GB">12-256</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                    <input type="text" id="ramRomCustom" class="hidden" style="margin-top:5px" placeholder="Enter specs">
+                </div>
+                <div class="form-group">
+                    <label>Purchase Price (₹)</label>
+                    <input type="number" id="purchasePrice" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Dealer</label>
+                    <input type="text" id="dealer" required placeholder="Supplier name">
+                </div>
+            </div>
+            
+            <div id="soldFields" class="form-grid hidden" style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 10px;">
+                <div class="form-group">
+                    <label>Sold Date</label>
+                    <input type="date" id="soldDate">
+                </div>
+                <div class="form-group">
+                    <label>Sold Price (₹)</label>
+                    <input type="number" id="soldPrice">
+                </div>
+            </div>
+
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 2;">Save Product</button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()" style="flex: 1;">Cancel</button>
+            </div>
+        </form>
+    </section>
+
+    <section>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Search Inventory</label>
+                <input type="text" id="searchInput" placeholder="Search Model or IMEI..." oninput="renderTable()">
+            </div>
+            <div class="form-group">
+                <label>Status Filter</label>
+                <select id="filterStatus" onchange="renderTable()">
+                    <option value="all">All Items</option>
+                    <option value="available">Available Only</option>
+                    <option value="sold">Sold Only</option>
+                </select>
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn btn-outline" style="width: 100%;" onclick="exportToCSV()">📤 Export CSV</button>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model Details</th>
+                        <th>IMEI</th>
+                        <th>Purchase</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Sold For</th>
+                        <th>Profit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div id="scannerModal" class="modal hidden">
+    <h2 style="color: white; margin-bottom: 10px;">Scan Barcode</h2>
+    <video id="video"></video>
+    <button class="btn btn-primary" style="margin-top: 20px; width: 200px;" onclick="stopScanning()">Close</button>
+</div>
+
+<div id="reportModal" class="modal hidden" style="background: var(--bg-light); color: var(--text-light);">
+    <div style="width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 8px; color: #333;">
+        <h2>Daily Sales Report</h2>
+        <hr style="margin: 15px 0;">
+        <input type="date" id="reportDate" style="margin-bottom: 15px;" onchange="updateDailyReport()">
+        <div id="reportResult" style="background: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+            Select a date to see sales...
+        </div>
+        <button class="btn btn-primary" onclick="closeReportModal()">Close</button>
+    </div>
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    let stock = [];
+    const STORAGE_KEY = 'stock';
+    let codeReader = null;
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        loadData();
+        checkTheme();
+        renderTable();
+    };
+
+    function loadData() {
+        const rawData = localStorage.getItem(STORAGE_KEY);
+        try {
+            const parsed = JSON.parse(rawData) || [];
+            // BACKWARD COMPATIBILITY: Ensure all items have necessary fields
+            stock = parsed.map(item => ({
+                id: item.id || Date.now() + Math.random(),
+                model: item.model || 'Unknown',
+                imei: item.imei || 'N/A',
+                ramRom: item.ramRom || 'N/A',
+                purchasePrice: Number(item.purchasePrice) || 0,
+                dealer: item.dealer || 'N/A',
+                status: item.status || 'available',
+                receivedDate: item.receivedDate || new Date().toLocaleDateString('en-GB'),
+                soldDate: item.soldDate || '',
+                soldPrice: Number(item.soldPrice) || 0,
+                profitLoss: Number(item.profitLoss) || 0
+            }));
+        } catch (e) {
+            stock = [];
+            console.error("Data corruption detected, resetting state.");
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stock));
+        updateDashboard();
+    }
+
+    // --- CORE LOGIC ---
+    function handleRamRomChange() {
+        const select = document.getElementById('ramRomSelect');
+        const customInput = document.getElementById('ramRomCustom');
+        customInput.classList.toggle('hidden', select.value !== 'custom');
+    }
+
+    document.getElementById('stockForm').onsubmit = function(e) {
+        e.preventDefault();
+        
+        const editId = document.getElementById('editId').value;
+        const ramRom = document.getElementById('ramRomSelect').value === 'custom' 
+            ? document.getElementById('ramRomCustom').value 
+            : document.getElementById('ramRomSelect').value;
+
+        const formData = {
+            id: editId ? Number(editId) : Date.now(),
+            model: document.getElementById('model').value,
+            imei: document.getElementById('imei').value,
+            ramRom: ramRom,
+            purchasePrice: Number(document.getElementById('purchasePrice').value),
+            dealer: document.getElementById('dealer').value,
+            status: editId ? stock.find(i => i.id == editId).status : 'available',
+            receivedDate: editId ? stock.find(i => i.id == editId).receivedDate : new Date().toLocaleDateString('en-GB'),
+            soldDate: document.getElementById('soldDate').value,
+            soldPrice: Number(document.getElementById('soldPrice').value),
+        };
+
+        // Recalculate profit if sold
+        if (formData.soldPrice > 0) {
+            formData.status = 'sold';
+            formData.profitLoss = formData.soldPrice - formData.purchasePrice;
+        }
+
+        if (editId) {
+            stock = stock.map(i => i.id == editId ? formData : i);
+        } else {
+            stock.push(formData);
+        }
+
+        saveData();
+        resetForm();
+        renderTable();
+        alert("Stock updated successfully!");
+    };
+
+    function renderTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('filterStatus').value;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        const filtered = stock.filter(item => {
+            const matchesSearch = item.model.toLowerCase().includes(query) || item.imei.toLowerCase().includes(query);
+            const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+
+        filtered.reverse().forEach(item => {
+            const row = document.createElement('tr');
+            if(item.status === 'sold') row.classList.add('sold');
+
+            row.innerHTML = `
+                <td>
+                    <strong>${item.model}</strong><br>
+                    <small style="color: #666;">${item.ramRom}</small>
+                </td>
+                <td><code>${item.imei}</code></td>
+                <td>₹${item.purchasePrice}</td>
+                <td><span class="badge badge-${item.status}">${item.status.toUpperCase()}</span></td>
+                <td><small>${item.status === 'sold' ? item.soldDate : item.receivedDate}</small></td>
+                <td>${item.soldPrice ? '₹' + item.soldPrice : '-'}</td>
+                <td style="color: ${item.profitLoss >= 0 ? 'green' : 'red'}">
+                    ${item.status === 'sold' ? '₹' + item.profitLoss : '-'}
+                </td>
+                <td>
+                    <button class="btn btn-outline" style="padding: 5px 8px; min-height: 30px;" onclick="editItem(${item.id})">Edit</button>
+                    ${item.status === 'available' ? `<button class="btn btn-success" style="padding: 5px 8px; min-height: 30px;" onclick="quickSell(${item.id})">Sell</button>` : ''}
+                    <button class="btn btn-secondary" style="padding: 5px 8px; min-height: 30px; background: #999;" onclick="deleteItem(${item.id})">Del</button>
+                </td>
             `;
-            document.getElementById('report-content').innerHTML = reportContent;
+            tbody.appendChild(row);
+        });
+        updateDashboard();
+    }
+
+    function updateDashboard() {
+        const available = stock.filter(i => i.status === 'available');
+        const sold = stock.filter(i => i.status === 'sold');
+        
+        document.getElementById('dash-total-stock').textContent = available.length;
+        document.getElementById('dash-total-sold').textContent = sold.length;
+        
+        const totalVal = available.reduce((sum, item) => sum + item.purchasePrice, 0);
+        document.getElementById('dash-total-value').textContent = '₹' + totalVal.toLocaleString('en-IN');
+    }
+
+    // --- ACTIONS ---
+    function quickSell(id) {
+        const price = prompt("Enter final sold price:");
+        if (price === null) return;
+        
+        const item = stock.find(i => i.id === id);
+        item.status = 'sold';
+        item.soldPrice = Number(price);
+        item.soldDate = new Date().toISOString().split('T')[0];
+        item.profitLoss = item.soldPrice - item.purchasePrice;
+        
+        saveData();
+        renderTable();
+    }
+
+    function editItem(id) {
+        const item = stock.find(i => i.id === id);
+        document.getElementById('editId').value = item.id;
+        document.getElementById('model').value = item.model;
+        document.getElementById('imei').value = item.imei;
+        document.getElementById('purchasePrice').value = item.purchasePrice;
+        document.getElementById('dealer').value = item.dealer;
+        document.getElementById('formTitle').textContent = "Editing: " + item.model;
+        
+        if (item.status === 'sold') {
+            document.getElementById('soldFields').classList.remove('hidden');
+            document.getElementById('soldDate').value = item.soldDate;
+            document.getElementById('soldPrice').value = item.soldPrice;
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteItem(id) {
+        if (confirm("Are you sure? This cannot be undone.")) {
+            stock = stock.filter(i => i.id !== id);
+            saveData();
+            renderTable();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('stockForm').reset();
+        document.getElementById('editId').value = '';
+        document.getElementById('formTitle').textContent = "Add New Stock";
+        document.getElementById('soldFields').classList.add('hidden');
+    }
+
+    // --- MODALS & EXTRAS ---
+    function openReportModal() { document.getElementById('reportModal').classList.remove('hidden'); }
+    function closeReportModal() { document.getElementById('reportModal').classList.add('hidden'); }
+
+    function updateDailyReport() {
+        const date = document.getElementById('reportDate').value;
+        const sales = stock.filter(i => i.soldDate === date);
+        const resultDiv = document.getElementById('reportResult');
+        
+        if (sales.length === 0) {
+            resultDiv.innerHTML = "No sales recorded for this date.";
+            return;
         }
 
-        function saveNotes() {
-            const reportDate = document.getElementById('reportDate').value;
-            if (!reportDate) return;
-            const selectedDate = new Date(reportDate).toLocaleDateString('en-GB');
-            const notes = document.getElementById('reportNotes').value;
-            localStorage.setItem(`notes_${selectedDate}`, notes);
-            console.log('Saved notes for', selectedDate, ':', notes);
-        }
+        const totalRev = sales.reduce((s, i) => s + i.soldPrice, 0);
+        const totalProf = sales.reduce((s, i) => s + i.profitLoss, 0);
 
-        function exportReportToCSV() {
-            const reportDate = document.getElementById('reportDate').value;
-            if (!reportDate) {
-                alert('Please select a date.');
-                return;
+        resultDiv.innerHTML = `
+            <p><strong>Units Sold:</strong> ${sales.length}</p>
+            <p><strong>Total Revenue:</strong> ₹${totalRev}</p>
+            <p><strong>Total Profit:</strong> <span style="color:${totalProf >= 0 ? 'green' : 'red'}">₹${totalProf}</span></p>
+            <ul style="margin-top:10px; font-size: 0.8rem;">
+                ${sales.map(s => `<li>${s.model} - ₹${s.soldPrice}</li>`).join('')}
+            </ul>
+        `;
+    }
+
+    function exportToCSV() {
+        let csv = "Model,IMEI,RAM_ROM,PurchasePrice,Dealer,Status,SoldDate,SoldPrice,Profit\n";
+        stock.forEach(i => {
+            csv += `${i.model},${i.imei},${i.ramRom},${i.purchasePrice},${i.dealer},${i.status},${i.soldDate},${i.soldPrice},${i.profitLoss}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inventory_${new Date().toLocaleDateString()}.csv`;
+        a.click();
+    }
+
+    // --- SCANNER ---
+    function startScanning() {
+        document.getElementById('scannerModal').classList.remove('hidden');
+        codeReader = new ZXing.BrowserMultiFormatReader();
+        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+            if (result) {
+                document.getElementById('imei').value = result.text;
+                stopScanning();
+                alert("Scanned: " + result.text);
             }
-            const selectedDate = new Date(reportDate).toLocaleDateString('en-GB');
-            const selectedDateStart = new Date(new Date(reportDate).setHours(0, 0, 0, 0)).getTime();
-            const selectedDateEnd = new Date(new Date(reportDate).setHours(23, 59, 59, 999)).getTime();
+        });
+    }
 
-            const openingStock = stock.filter(item => {
-                const receivedDate = new Date(item.receivedDate.split('/').reverse().join('-')).getTime();
-                const soldDate = item.soldDate ? new Date(item.soldDate.split('/').reverse().join('-')).getTime() : Infinity;
-                return receivedDate < selectedDateStart && soldDate > selectedDateEnd;
-            }).length;
-
-            const newPhones = stock.filter(item => item.receivedDate === selectedDate);
-            const newPhonesList = newPhones.map(item => `${item.model} (IMEI: ${item.imei})`).join('; ');
-
-            const soldPhones = stock.filter(item => item.soldDate === selectedDate && item.status === 'sold');
-            const soldPhonesList = soldPhones.map(item => `${item.model} (IMEI: ${item.imei})`).join('; ');
-
-            const closingStock = stock.filter(item => {
-                const receivedDate = new Date(item.receivedDate.split('/').reverse().join('-')).getTime();
-                const soldDate = item.soldDate ? new Date(item.soldDate.split('/').reverse().join('-')).getTime() : Infinity;
-                return receivedDate <= selectedDateEnd && soldDate > selectedDateEnd;
-            }).length;
-
-            const notes = localStorage.getItem(`notes_${selectedDate}`) || 'None';
-
-            const headers = ['Date,Opening Stock,New Phones,New Phones List,Sold Phones,Sold Phones List,Closing Stock,Notes'];
-            const row = `${selectedDate},${openingStock},${newPhones.length},"${newPhonesList || 'None'}",${soldPhones.length},"${soldPhonesList || 'None'}",${closingStock},"${notes}"`;
-            const csv = headers.concat(row).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `daily_report_${reportDate}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            console.log('Report CSV download initiated for', selectedDate);
+    function stopScanning() {
+        if (codeReader) {
+            codeReader.reset();
+            document.getElementById('scannerModal').classList.add('hidden');
         }
-    </script>
+    }
+
+    // --- THEME ---
+    function toggleDarkMode() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    function checkTheme() {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    }
+</script>
 </body>
 </html>
