@@ -17,6 +17,8 @@
             --text-dark: #f4f4f4;
             --success: #28a745;
             --danger: #dc3545;
+            --border-light: #eee;
+            --border-dark: #444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -53,8 +55,8 @@
         .table-container { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { background: var(--primary); color: white; text-align: left; padding: 12px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        .dark-mode td { border-bottom-color: #444; }
+        td { padding: 12px; border-bottom: 1px solid var(--border-light); }
+        .dark-mode td { border-bottom-color: var(--border-dark); }
 
         tr.sold { opacity: 0.7; background-color: rgba(220, 53, 69, 0.05); }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
@@ -64,9 +66,16 @@
         /* Hidden Utility */
         .hidden { display: none !important; }
 
-        /* Scanner Overlays */
+        /* Modal Styles */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         #video { width: 100%; max-width: 500px; border-radius: 10px; border: 3px solid var(--primary); }
+
+        /* Report Specific */
+        .report-content { width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; background: white; padding: 20px; border-radius: 8px; }
+        .dark-mode .report-content { background: var(--card-dark); color: var(--text-dark); }
+        
+        .sale-card { border: 1px solid #ddd; padding: 12px; border-radius: 8px; background: #fff; margin-bottom: 10px; }
+        .dark-mode .sale-card { background: #3d3d3d; border-color: #555; }
 
         @media (max-width: 600px) {
             .stat-card { padding: 10px; }
@@ -203,15 +212,20 @@
     <button class="btn btn-primary" style="margin-top: 20px; width: 200px;" onclick="stopScanning()">Close</button>
 </div>
 
-<div id="reportModal" class="modal hidden" style="background: var(--bg-light); color: var(--text-light);">
-    <div style="width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 8px; color: #333;">
-        <h2>Daily Sales Report</h2>
-        <hr style="margin: 15px 0;">
-        <input type="date" id="reportDate" style="margin-bottom: 15px;" onchange="updateDailyReport()">
-        <div id="reportResult" style="background: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-            Select a date to see sales...
+<div id="reportModal" class="modal hidden">
+    <div class="report-content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Daily Sales Report</h2>
+            <button class="btn btn-secondary" style="min-height: 30px;" onclick="closeReportModal()">✕</button>
         </div>
-        <button class="btn btn-primary" onclick="closeReportModal()">Close</button>
+        <hr style="margin: 15px 0;">
+        <div class="form-group">
+            <label>Select Sales Date</label>
+            <input type="date" id="reportDate" onchange="updateDailyReport()">
+        </div>
+        <div id="reportResult">
+            <p style="text-align: center; color: #888; padding: 20px;">Please select a date to view sales activity.</p>
+        </div>
     </div>
 </div>
 
@@ -232,7 +246,6 @@
         const rawData = localStorage.getItem(STORAGE_KEY);
         try {
             const parsed = JSON.parse(rawData) || [];
-            // BACKWARD COMPATIBILITY: Ensure all items have necessary fields
             stock = parsed.map(item => ({
                 id: item.id || Date.now() + Math.random(),
                 model: item.model || 'Unknown',
@@ -248,7 +261,7 @@
             }));
         } catch (e) {
             stock = [];
-            console.error("Data corruption detected, resetting state.");
+            console.error("Data error. Resetting.");
         }
     }
 
@@ -266,11 +279,12 @@
 
     document.getElementById('stockForm').onsubmit = function(e) {
         e.preventDefault();
-        
         const editId = document.getElementById('editId').value;
         const ramRom = document.getElementById('ramRomSelect').value === 'custom' 
             ? document.getElementById('ramRomCustom').value 
             : document.getElementById('ramRomSelect').value;
+
+        const originalItem = editId ? stock.find(i => i.id == editId) : null;
 
         const formData = {
             id: editId ? Number(editId) : Date.now(),
@@ -279,16 +293,20 @@
             ramRom: ramRom,
             purchasePrice: Number(document.getElementById('purchasePrice').value),
             dealer: document.getElementById('dealer').value,
-            status: editId ? stock.find(i => i.id == editId).status : 'available',
-            receivedDate: editId ? stock.find(i => i.id == editId).receivedDate : new Date().toLocaleDateString('en-GB'),
+            status: originalItem ? originalItem.status : 'available',
+            receivedDate: originalItem ? originalItem.receivedDate : new Date().toLocaleDateString('en-GB'),
             soldDate: document.getElementById('soldDate').value,
             soldPrice: Number(document.getElementById('soldPrice').value),
         };
 
-        // Recalculate profit if sold
         if (formData.soldPrice > 0) {
             formData.status = 'sold';
+            if(!formData.soldDate) formData.soldDate = new Date().toISOString().split('T')[0];
             formData.profitLoss = formData.soldPrice - formData.purchasePrice;
+        } else {
+            formData.status = 'available';
+            formData.soldDate = '';
+            formData.profitLoss = 0;
         }
 
         if (editId) {
@@ -320,18 +338,13 @@
             if(item.status === 'sold') row.classList.add('sold');
 
             row.innerHTML = `
-                <td>
-                    <strong>${item.model}</strong><br>
-                    <small style="color: #666;">${item.ramRom}</small>
-                </td>
+                <td><strong>${item.model}</strong><br><small style="color: #666;">${item.ramRom}</small></td>
                 <td><code>${item.imei}</code></td>
                 <td>₹${item.purchasePrice}</td>
                 <td><span class="badge badge-${item.status}">${item.status.toUpperCase()}</span></td>
                 <td><small>${item.status === 'sold' ? item.soldDate : item.receivedDate}</small></td>
                 <td>${item.soldPrice ? '₹' + item.soldPrice : '-'}</td>
-                <td style="color: ${item.profitLoss >= 0 ? 'green' : 'red'}">
-                    ${item.status === 'sold' ? '₹' + item.profitLoss : '-'}
-                </td>
+                <td style="color: ${item.profitLoss >= 0 ? 'green' : 'red'}">${item.status === 'sold' ? '₹' + item.profitLoss : '-'}</td>
                 <td>
                     <button class="btn btn-outline" style="padding: 5px 8px; min-height: 30px;" onclick="editItem(${item.id})">Edit</button>
                     ${item.status === 'available' ? `<button class="btn btn-success" style="padding: 5px 8px; min-height: 30px;" onclick="quickSell(${item.id})">Sell</button>` : ''}
@@ -346,25 +359,20 @@
     function updateDashboard() {
         const available = stock.filter(i => i.status === 'available');
         const sold = stock.filter(i => i.status === 'sold');
-        
         document.getElementById('dash-total-stock').textContent = available.length;
         document.getElementById('dash-total-sold').textContent = sold.length;
-        
         const totalVal = available.reduce((sum, item) => sum + item.purchasePrice, 0);
         document.getElementById('dash-total-value').textContent = '₹' + totalVal.toLocaleString('en-IN');
     }
 
-    // --- ACTIONS ---
     function quickSell(id) {
         const price = prompt("Enter final sold price:");
-        if (price === null) return;
-        
+        if (price === null || price === "") return;
         const item = stock.find(i => i.id === id);
         item.status = 'sold';
         item.soldPrice = Number(price);
         item.soldDate = new Date().toISOString().split('T')[0];
         item.profitLoss = item.soldPrice - item.purchasePrice;
-        
         saveData();
         renderTable();
     }
@@ -378,17 +386,19 @@
         document.getElementById('dealer').value = item.dealer;
         document.getElementById('formTitle').textContent = "Editing: " + item.model;
         
+        const soldFields = document.getElementById('soldFields');
         if (item.status === 'sold') {
-            document.getElementById('soldFields').classList.remove('hidden');
+            soldFields.classList.remove('hidden');
             document.getElementById('soldDate').value = item.soldDate;
             document.getElementById('soldPrice').value = item.soldPrice;
+        } else {
+            soldFields.classList.add('hidden');
         }
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function deleteItem(id) {
-        if (confirm("Are you sure? This cannot be undone.")) {
+        if (confirm("Delete this product permanently?")) {
             stock = stock.filter(i => i.id !== id);
             saveData();
             renderTable();
@@ -400,49 +410,78 @@
         document.getElementById('editId').value = '';
         document.getElementById('formTitle').textContent = "Add New Stock";
         document.getElementById('soldFields').classList.add('hidden');
+        document.getElementById('ramRomCustom').classList.add('hidden');
     }
 
-    // --- MODALS & EXTRAS ---
     function openReportModal() { document.getElementById('reportModal').classList.remove('hidden'); }
     function closeReportModal() { document.getElementById('reportModal').classList.add('hidden'); }
 
+    // --- UPGRADED REPORT LOGIC ---
     function updateDailyReport() {
         const date = document.getElementById('reportDate').value;
         const sales = stock.filter(i => i.soldDate === date);
         const resultDiv = document.getElementById('reportResult');
         
         if (sales.length === 0) {
-            resultDiv.innerHTML = "No sales recorded for this date.";
+            resultDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#888;">No sales on ${date || 'selected date'}.</p>`;
             return;
         }
 
         const totalRev = sales.reduce((s, i) => s + i.soldPrice, 0);
         const totalProf = sales.reduce((s, i) => s + i.profitLoss, 0);
 
-        resultDiv.innerHTML = `
-            <p><strong>Units Sold:</strong> ${sales.length}</p>
-            <p><strong>Total Revenue:</strong> ₹${totalRev}</p>
-            <p><strong>Total Profit:</strong> <span style="color:${totalProf >= 0 ? 'green' : 'red'}">₹${totalProf}</span></p>
-            <ul style="margin-top:10px; font-size: 0.8rem;">
-                ${sales.map(s => `<li>${s.model} - ₹${s.soldPrice}</li>`).join('')}
-            </ul>
+        let reportHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #f0f0f0; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                <div><small>Units Sold</small><br><strong>${sales.length}</strong></div>
+                <div><small>Net Profit</small><br><strong style="color:${totalProf >= 0 ? 'green' : 'red'}">₹${totalProf.toLocaleString('en-IN')}</strong></div>
+                <div style="grid-column: span 2; border-top: 1px solid #ccc; margin-top:5px; padding-top:5px;">
+                    <small>Total Cash In</small><br><strong>₹${totalRev.toLocaleString('en-IN')}</strong>
+                </div>
+            </div>
+            <h4 style="margin-bottom:10px;">Product Details:</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
         `;
+
+        sales.forEach(item => {
+            reportHTML += `
+                <div class="sale-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong style="color: var(--primary);">${item.model}</strong><br>
+                            <small style="font-size:0.75rem;">Specs: ${item.ramRom}</small>
+                        </div>
+                        <span class="badge badge-sold">SOLD</span>
+                    </div>
+                    <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; font-size: 0.8rem;">
+                        <div><strong>IMEI:</strong> ${item.imei}</div>
+                        <div><strong>Dealer:</strong> ${item.dealer}</div>
+                        <div style="margin-top:4px;"><strong>Cost:</strong> ₹${item.purchasePrice}</div>
+                        <div style="margin-top:4px;"><strong>Sold:</strong> ₹${item.soldPrice}</div>
+                    </div>
+                    <div style="margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 5px; text-align: right; font-weight: bold; color: ${item.profitLoss >= 0 ? 'green' : 'red'}">
+                        Profit: ₹${item.profitLoss}
+                    </div>
+                </div>
+            `;
+        });
+
+        reportHTML += `</div>`;
+        resultDiv.innerHTML = reportHTML;
     }
 
     function exportToCSV() {
         let csv = "Model,IMEI,RAM_ROM,PurchasePrice,Dealer,Status,SoldDate,SoldPrice,Profit\n";
         stock.forEach(i => {
-            csv += `${i.model},${i.imei},${i.ramRom},${i.purchasePrice},${i.dealer},${i.status},${i.soldDate},${i.soldPrice},${i.profitLoss}\n`;
+            csv += `"${i.model}","${i.imei}","${i.ramRom}",${i.purchasePrice},"${i.dealer}",${i.status},${i.soldDate},${i.soldPrice},${i.profitLoss}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `inventory_${new Date().toLocaleDateString()}.csv`;
+        a.download = `Stock_Report_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     }
 
-    // --- SCANNER ---
     function startScanning() {
         document.getElementById('scannerModal').classList.remove('hidden');
         codeReader = new ZXing.BrowserMultiFormatReader();
@@ -450,7 +489,6 @@
             if (result) {
                 document.getElementById('imei').value = result.text;
                 stopScanning();
-                alert("Scanned: " + result.text);
             }
         });
     }
@@ -462,16 +500,13 @@
         }
     }
 
-    // --- THEME ---
     function toggleDarkMode() {
         const isDark = document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
 
     function checkTheme() {
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
+        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     }
 </script>
 </body>
