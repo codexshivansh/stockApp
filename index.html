@@ -224,12 +224,7 @@
             <video id="video" style="width:100%; border-radius:10px"></video>
             <div style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:red;"></div>
         </div>
-        
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap">
-            <button class="btn-secondary" style="margin-top:20px" onclick="switchCamera()">🔄 Switch Camera</button>
-            <button class="btn-primary" style="margin-top:20px" onclick="stopScanning()">Close Scanner</button>
-        </div>
-        
+        <button class="btn-primary" style="margin-top:20px" onclick="stopScanning()">Close Scanner</button>
     </div>
 </div>
 
@@ -267,7 +262,8 @@
         '987654321098765': { model: 'iPhone 14', ramRom: '6GB/256GB' }
     };
 
-    let currentFacingMode = 'environment'; // Default back camera
+    let videoDevices = [];
+    let currentDeviceIndex = 0;
     let stock = JSON.parse(localStorage.getItem('stock')) || [];
     let nextId = stock.length ? Math.max(...stock.map(item => item.id)) + 1 : 1;
     let codeReader = null;
@@ -467,53 +463,71 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-// 1. startScanning ko isse badal dein
-function startScanning() {
+    async function startScanning() {
     const container = document.getElementById('video-container');
     container.style.display = 'block';
     
-    // Stop any previous stream before starting new one
-    if(mediaStream) {
+    if (mediaStream) {
         mediaStream.getTracks().forEach(t => t.stop());
     }
 
-    navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: currentFacingMode } 
-    })
-    .then(stream => {
-        mediaStream = stream;
-        document.getElementById('video').srcObject = stream;
-        
+    try {
         if (!codeReader) {
             codeReader = new ZXing.BrowserMultiFormatReader();
         }
+
+        // Saare cameras ki list mangao
+        videoDevices = await codeReader.listVideoInputDevices();
         
-        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+        if (videoDevices.length === 0) {
+            alert("No camera found!");
+            return;
+        }
+
+        // Current camera se stream start karo
+        const selectedDeviceId = videoDevices[currentDeviceIndex].deviceId;
+        
+        const constraints = {
+            video: { deviceId: { exact: selectedDeviceId } }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        mediaStream = stream;
+        document.getElementById('video').srcObject = stream;
+
+        // Label update karo (taaki pta chale kaunsa camera hai)
+        const label = videoDevices[currentDeviceIndex].label || "Camera " + (currentDeviceIndex + 1);
+        document.getElementById('scan-status').textContent = "Using: " + label;
+
+        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
             if (result) {
                 document.getElementById('imei').value = result.text;
-                if(imeiDatabase[result.text]) {
-                    document.getElementById('model').value = imeiDatabase[result.text].model;
-                }
                 stopScanning();
             }
         });
-    }).catch(e => {
-        console.error(e);
-        alert("Camera Error: Check permissions or try another browser.");
-    });
-}
 
-// 2. Ye naya function niche add karein
+    } catch (e) {
+        console.error(e);
+        alert("Camera Error: " + e.message);
+    }
+}
 function switchCamera() {
-    // Switch between 'user' (front) and 'environment' (back)
-    currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
-    
-    // UI update for status
-    document.getElementById('scan-status').textContent = 
-        currentFacingMode === 'user' ? "Front Camera Active" : "Back Camera Active";
-    
-    // Restart scanning with new camera
-    startScanning();
+    if (videoDevices.length > 1) {
+        // Agle camera par jao (0 -> 1 -> 2 -> wapas 0)
+        currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+        
+        // Purana camera band karke naya chalu
+        if(mediaStream) {
+            mediaStream.getTracks().forEach(t => t.stop());
+        }
+        if(codeReader) {
+            codeReader.reset();
+        }
+        
+        startScanning();
+    } else {
+        alert("Only one camera detected.");
+    }
 }
 
     function stopScanning() {
