@@ -478,8 +478,16 @@
 
     try {
         if (!codeReader) {
-            codeReader = new ZXing.BrowserMultiFormatReader();
-        }
+    const hints = new Map();
+    const formats = [
+        ZXing.BarcodeFormat.CODE_128, // IMEI ke liye common
+        ZXing.BarcodeFormat.EAN_13,   // Standard products
+        ZXing.BarcodeFormat.ITF,      // Long barcodes
+        ZXing.BarcodeFormat.QR_CODE   // QR bhi chalta rahega
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    codeReader = new ZXing.BrowserMultiFormatReader(hints);
+}
 
         // Saare cameras ki list mangao
         videoDevices = await codeReader.listVideoInputDevices();
